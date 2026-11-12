@@ -9,7 +9,7 @@ def test_api_flow():
     meta = client.get("/api/meta")
     assert meta.status_code == 200
     assert meta.json()["resource_count"] >= 20
-    catalog = client.get("/api/catalog", params={"category": "Backend"})
+    catalog = client.get("/api/catalog", params={"q": "python"})
     assert catalog.status_code == 200
     assert catalog.json()["total"] > 0
     request = {"profile": {"goal": "Become a backend engineer", "current_skills": ["python", "git"],
