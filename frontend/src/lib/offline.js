@@ -1,6 +1,17 @@
 import starterCatalogue from "../data/resources.json";
-import publicCatalogue from "../data/public_courses.json";
-const catalogue = publicCatalogue.length > 3000 ? publicCatalogue : starterCatalogue;
+// The ~9MB public catalogue is downloaded ONLY if the Python API is offline.
+// This keeps the cinematic homepage and normal API-backed sessions lightweight.
+let catalogue = starterCatalogue;
+let loadedPublic = false;
+let loadingPromise = null;
+async function ensureCatalogue() {
+  if (loadedPublic) return;
+  if (!loadingPromise) loadingPromise = import("../data/public_courses.json").then(mod => {
+    if (mod.default.length > 3000) catalogue = mod.default;
+    loadedPublic = true;
+  });
+  await loadingPromise;
+}
 
 /**
  * Browser-only fallback for the portfolio demo.
@@ -228,7 +239,8 @@ function offlineEvaluation() {
   return memoizedEvaluation;
 }
 
-export function offlineRequest(path, options = {}) {
+export async function offlineRequest(path, options = {}) {
+  await ensureCatalogue();
   const url = new URL(path,"http://skillpath.local");
   const body = options.body ? JSON.parse(options.body) : {};
   switch(url.pathname) {

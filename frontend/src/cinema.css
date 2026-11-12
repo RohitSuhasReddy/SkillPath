@@ -177,7 +177,7 @@
 
 /* One slow full rotation like the reference starfield. Container still
    follows the cursor independently, yielding two depths of motion. */
-.cinema-starfield-rotor { position:absolute; inset:0; transform-origin:50% 50%; animation:cinema-orbit 155s linear infinite; }
+.cinema-starfield-rotor { position:absolute; inset:0; transform-origin:50% 50%; animation:cinema-orbit 85s linear infinite; }
 .cinema-starfield-rotor i { position:absolute; display:block; background:#fff; border-radius:50%; }
 @keyframes cinema-orbit { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
 /* Distinct SKILL/PATH animated identity, with accessible static logo text. */
@@ -194,3 +194,8 @@
  .cinema-starfield-rotor,.cinema-logo,.cinema-logo-shine { animation:none !important; }
  .cinema-logo-part,.cinema-logo-slash { transition:none !important; }
 }
+
+.cinema-starfield-rotor i:nth-child(3n) { animation:cinema-star-glimmer 5s ease-in-out infinite alternate; }
+.cinema-starfield-rotor i:nth-child(4n) { animation:cinema-star-glimmer 7s -3s ease-in-out infinite alternate-reverse; }
+@keyframes cinema-star-glimmer { from { filter:brightness(.45); transform:scale(.65); } to { filter:brightness(1.65); transform:scale(1.2); } }
+@media(prefers-reduced-motion:reduce) { .cinema-starfield-rotor i { animation:none !important; } }

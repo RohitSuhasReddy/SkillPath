@@ -82,7 +82,8 @@ def _corpus_index(catalog: list[dict]):
         vectorizer = TfidfVectorizer(stop_words="english", ngram_range=(1, 2),
                                      max_features=90000, sublinear_tf=True, min_df=1)
         matrix = vectorizer.fit_transform([_document(row) for row in catalog])
-        _INDEX.clear()
+        if len(_INDEX) >= 3:
+            _INDEX.pop(next(iter(_INDEX)))
         _INDEX[key] = (vectorizer, normalize(matrix))
     return _INDEX[key]
 
