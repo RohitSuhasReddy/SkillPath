@@ -1,8 +1,8 @@
 /* Screenshot-aligned landing experience: photographic motion, ink black, white type.
    Motion is implemented by a shared eased RAF loop in CinemaHome.jsx. */
-.cinema-home { background:#0b0b0b; color:#fff; font-family:'Manrope',Arial,sans-serif; }
-.cinema-hero { position:relative; width:100%; min-height:670px; height:100svh; isolation:isolate; background:#0b0b0b; overflow:hidden; }
-.cinema-hero::before { content:""; position:absolute; inset:0; background:radial-gradient(ellipse 53% 72% at 49% 42%,#19191945 0%,#0b0b0b00 70%); pointer-events:none; z-index:0; }
+.cinema-home { background:#0d0d0d; color:#fff; font-family:'Manrope',Arial,sans-serif; }
+.cinema-hero { position:relative; width:100%; min-height:670px; height:100svh; isolation:isolate; background:#0d0d0d; overflow:hidden; }
+.cinema-hero::before { content:""; position:absolute; inset:0; background:radial-gradient(ellipse 53% 72% at 49% 42%,#19191945 0%,#0d0d0d00 70%); pointer-events:none; z-index:0; }
 .cinema-layer { will-change:transform; }
 .cinema-stars { position:absolute; inset:0; z-index:1; pointer-events:none; }
 .cinema-stars i { position:absolute; display:block; background:#fff; border-radius:50%; }
@@ -26,7 +26,7 @@
 .fallback-1 { background:linear-gradient(135deg,#221e1b,#19373a,#080b0f); }
 .fallback-2 { background:linear-gradient(135deg,#514c43,#111111,#3e4350); }
 .fallback-3 { background:linear-gradient(135deg,#3f2624,#15171a,#070707); }
-.cinema-vignette { position:absolute; inset:0; z-index:3; pointer-events:none; background:linear-gradient(180deg,#0b0b0b00 0%,#0b0b0b00 73%,#0b0b0b 98%),linear-gradient(90deg,#0b0b0b00 0%,#0b0b0b00 50%,#0b0b0b00 100%); }
+.cinema-vignette { position:absolute; inset:0; z-index:3; pointer-events:none; background:linear-gradient(180deg,#0d0d0d00 0%,#0d0d0d00 73%,#0d0d0d 98%),linear-gradient(90deg,#0d0d0d00 0%,#0d0d0d00 50%,#0d0d0d00 100%); }
 .cinema-topbar { position:absolute; z-index:12; top:16px; left:2.25%; right:2.25%; display:grid; align-items:start; grid-template-columns:1fr auto 1fr; gap:12px; }
 .cinema-logo { font-family:'Barlow Condensed',Impact,sans-serif; font-size:38px; font-weight:800; letter-spacing:-.045em; line-height:1.08; white-space:nowrap; width:max-content; padding-top:11px; }
 .cinema-logo span { font-style:italic; margin:0 1px; }
@@ -37,7 +37,7 @@
 .cinema-session:hover { transform:translateY(-2px); background:linear-gradient(120deg,#ffffff7f,#474747a6); box-shadow:inset 0 1px 1px #ffffff77,0 14px 38px #000a; }
 .cinema-heading { z-index:7; position:absolute; left:0; right:0; top:28%; text-align:center; pointer-events:none; }
 .cinema-micro { display:none; }
-.cinema-heading h1 { font-family:'Archivo Black','Arial Black',sans-serif; font-size:clamp(62px,6.7vw,132px); font-weight:900; line-height:.9; letter-spacing:-.065em; margin:0 auto; color:#fff; text-transform:uppercase; text-shadow:0 8px 30px #0003; }
+.cinema-heading h1 { font-family:'Archivo Black','Arial Black',sans-serif; font-size:clamp(62px,5.85vw,120px); font-weight:900; line-height:.9; letter-spacing:-.065em; margin:0 auto; color:#fff; text-transform:uppercase; text-shadow:0 8px 30px #0003; }
 .cinema-heading h1 span { display:block; white-space:nowrap; }
 .cinema-heading p { font-family:'Manrope',sans-serif; color:#979797; font-size:clamp(16px,1.2vw,22px); font-weight:650; line-height:1.65; letter-spacing:-.035em; margin:43px auto 0; padding:0 20px; max-width:730px; text-shadow:0 2px 5px #000b; }
 .cinema-bottom { position:absolute; z-index:7; bottom:28px; left:2.4%; right:2.4%; display:flex; align-items:center; justify-content:space-between; gap:20px; color:#858585; font-size:9px; letter-spacing:.145em; font-weight:800; }
