@@ -4,7 +4,7 @@
 
 ## What it does
 
-- **Landing:** editorial typography, magnetic CTAs, floating topic artwork, custom cursor (desktop) and reduced-motion fallbacks.
+- **Landing:** cinematic black-and-white hero inspired by the supplied reference screenshot, floating photographic cards, whole-scene cursor-driven depth/parallax, frosted session CTA, expanded navigation, and reduced-motion fallbacks.
 - **Build a path:** choose existing skills, goal, level, available hours per week, ranking mode, and 3–7 steps.
 - **Discover:** search/filter the starter catalogue, open public learning resources, mark courses completed.
 - **My path:** dynamically sequenced prerequisites, per-course fit breakdown, time-aware week ranges, explanations, feedback, Markdown export.

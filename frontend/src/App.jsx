@@ -1,3 +1,4 @@
+import CinemaHome from "./pages/CinemaHome.jsx";
 import React, { useEffect, useState } from "react";
 import { Routes, Route, Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ArrowUpRight, ArrowRight, Menu, X, Compass, FlaskConical, Route as RouteIcon, Zap, MoveDownRight, MoveRight, CheckCircle2 } from "lucide-react";
@@ -96,6 +97,7 @@ export default function App() {
   const [meta, setMeta] = useState({ skills: [], categories: [], resource_count: 0 });
   const [metaError, setMetaError] = useState("");
   const navigate = useNavigate();
+  const isHome = useLocation().pathname === "/";
 
   useEffect(() => {
     api("/meta").then(setMeta).catch(err => setMetaError(err.message));
@@ -108,9 +110,9 @@ export default function App() {
     navigate("/path");
   }
 
-  return <div className="app-shell"><ScrollToTop/><Header/>
+  return <div className="app-shell"><ScrollToTop/>{!isHome && <Header/>}
     <Routes>
-      <Route path="/" element={<Landing resourceCount={meta.resource_count} />}/>
+      <Route path="/" element={<CinemaHome resourceCount={meta.resource_count} />}/>
       <Route path="/build" element={<BuildPage profile={profile} meta={meta} metaError={metaError} onGenerate={generate}/>}/>
       <Route path="/discover" element={<DiscoverPage meta={meta} profile={profile} setProfile={setProfile}/>}/>
       <Route path="/path" element={<PathPage result={pathResult} onRegenerate={() => navigate("/build")}/>}/>
