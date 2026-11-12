@@ -174,3 +174,23 @@
 @media(prefers-reduced-motion:reduce) {
   .cinema-work-picture img,.cinema-work-content-body { transform:none !important; opacity:1 !important; will-change:auto; }
 }
+
+/* One slow full rotation like the reference starfield. Container still
+   follows the cursor independently, yielding two depths of motion. */
+.cinema-starfield-rotor { position:absolute; inset:0; transform-origin:50% 50%; animation:cinema-orbit 155s linear infinite; }
+.cinema-starfield-rotor i { position:absolute; display:block; background:#fff; border-radius:50%; }
+@keyframes cinema-orbit { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+/* Distinct SKILL/PATH animated identity, with accessible static logo text. */
+.cinema-logo { position:relative; display:inline-flex; align-items:center; overflow:hidden; isolation:isolate; transform-origin:left center; animation:cinema-logo-enter .8s cubic-bezier(.18,.8,.3,1) both; }
+.cinema-logo-part { display:inline-block; transform-origin:center; transition:transform .55s cubic-bezier(.2,.8,.2,1),letter-spacing .4s; }
+.cinema-logo:hover .cinema-logo-part:first-child { transform:translateY(-4px) skewX(-5deg); }
+.cinema-logo:hover .cinema-logo-part:nth-child(3) { transform:translateY(4px) skewX(5deg); }
+.cinema-logo-slash { display:inline-block; transform-origin:center; transition:transform .65s cubic-bezier(.2,.8,.2,1); }
+.cinema-logo:hover .cinema-logo-slash { transform:rotate(180deg) scale(1.35); }
+.cinema-logo-shine { position:absolute; inset:-25% auto -25% -60%; width:35%; pointer-events:none; background:linear-gradient(90deg,transparent,#ffffff55,transparent); transform:skewX(-30deg); animation:cinema-logo-glint 9s ease-in-out infinite 1.5s; }
+@keyframes cinema-logo-enter { from { opacity:0; transform:translateY(-16px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes cinema-logo-glint { 0%,82%,100% { left:-60%; } 94% { left:115%; } }
+@media(prefers-reduced-motion:reduce) {
+ .cinema-starfield-rotor,.cinema-logo,.cinema-logo-shine { animation:none !important; }
+ .cinema-logo-part,.cinema-logo-slash { transition:none !important; }
+}

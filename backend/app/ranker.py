@@ -1,173 +1,200 @@
-"""Deterministic, explainable hybrid scorer with hard safety/learning guardrails."""
+"""Hybrid learning-path ranking with corpus retrieval, hard topic relevance gate
+and sequential prerequisite / difficulty / time guardrails.
+
+The LLM is deliberately absent here: ranking is 100% deterministic.
+"""
 from __future__ import annotations
 from collections import Counter
+from functools import lru_cache
 from math import ceil
-import os
 import re
-from urllib.request import Request, urlopen
-import json
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import normalize
 
 LEVEL = {"Beginner": 0, "Intermediate": 1, "Advanced": 2}
+DEFAULT_WEIGHTS = {"goal": .54, "skills": .12, "difficulty": .12, "quality": .12, "readiness": .10}
+SKILLS_FIRST = {"goal": .35, "skills": .30, "difficulty": .12, "quality": .12, "readiness": .11}
 GOAL_MAP = {
     "data scientist": ["python", "statistics", "pandas", "machine learning", "scikit-learn"],
     "data science": ["python", "statistics", "pandas", "machine learning", "scikit-learn"],
     "data analyst": ["sql", "excel", "python", "pandas", "visualization"],
-    "data analysis": ["sql", "python", "pandas", "visualization"],
-    "machine learning": ["python", "statistics", "machine learning", "scikit-learn"],
-    "ml engineer": ["python", "machine learning", "pytorch", "mlops", "deployment"],
-    "ai engineer": ["python", "machine learning", "llm", "api", "deployment"],
-    "backend": ["python", "git", "api", "fastapi", "sql", "databases"],
-    "web developer": ["html", "css", "javascript", "react", "api"],
+    "data analysis": ["sql", "statistics", "visualization", "pandas"],
+    "machine learning": ["machine learning", "model evaluation", "scikit-learn"],
+    "backend": ["api", "fastapi", "sql", "databases", "backend"],
     "web application": ["html", "css", "javascript", "react", "api"],
-    "web app": ["html", "css", "javascript", "react", "api"],
-    "frontend": ["html", "css", "javascript", "react"],
-    "product analytics": ["sql", "statistics", "experimentation", "visualization"],
-    "deep learning": ["python", "machine learning", "pytorch", "deep learning"],
+    "web developer": ["javascript", "react", "html", "css"],
+    "frontend": ["javascript", "react", "html", "css"],
+    "ai engineer": ["machine learning", "llm", "api", "deployment"],
+    "signals and systems": ["signal processing", "fourier transform", "convolution", "lti systems", "laplace transform", "sampling", "z transform"],
+    "signal processing": ["signals and systems", "fourier transform", "convolution", "sampling", "digital signal processing", "filter design"],
+    "control systems": ["feedback control", "control systems", "linear systems", "state space"],
+    "computer networks": ["computer networks", "tcp", "ip", "routing", "network protocols"],
+    "digital electronics": ["digital electronics", "logic circuits", "digital systems"],
+    "operating systems": ["operating systems", "process scheduling", "memory management"],
 }
-DEFAULT_WEIGHTS = {"goal": .45, "skills": .12, "difficulty": .18, "quality": .13, "readiness": .12}
-_STORED = {}
+# Strict domain anchors prevent a "signals and systems" request drifting to
+# software systems, general probability, Python, Docker, etc.
+DOMAIN_ANCHORS = {
+    "signals and systems": ("signal", "fourier", "convolution", "laplace", "z transform", "lti", "dsp", "frequency response"),
+    "signal processing": ("signal", "fourier", "convolution", "sampling", "filter", "dsp", "spectrum"),
+    "control systems": ("control system", "feedback", "state space", "control theory", "dynamics"),
+    "operating systems": ("operating system", "process management", "kernel", "memory management", "scheduling"),
+    "computer networks": ("network", "routing", "tcp", "ip protocol", "packet"),
+}
+STOP = {"a", "an", "the", "of", "for", "course", "courses", "learn", "learning", "study", "want",
+        "become", "about", "master", "fundamentals", "basic", "beginner", "advanced", "from", "with"}
 
 def goal_skills(goal: str, catalog: list[dict]) -> list[str]:
-    text = goal.lower().strip()
-    if not text:
-        return []
-    match = next((skills for phrase, skills in sorted(GOAL_MAP.items(), key=lambda v: -len(v[0])) if phrase in text), None)
-    if match:
-        return match
-    vocabulary = {s for resource in catalog for s in resource["skills"]}
-    return [s for s in sorted(vocabulary, key=len, reverse=True) if re.search(r"(?<!\w)" + re.escape(s) + r"(?!\w)", text)][:8]
+    text = goal.casefold().strip()
+    phrases = [(key, tags) for key, tags in GOAL_MAP.items() if key in text]
+    if phrases:
+        return list(max(phrases, key=lambda x: len(x[0]))[1])
+    vocabulary = {skill for row in catalog for skill in row.get("skills", ())}
+    return [s for s in sorted(vocabulary, key=len, reverse=True)
+            if len(s) > 2 and re.search(r"(?<!\w)" + re.escape(s) + r"(?!\w)", text)][:8]
 
-def _similarity(tags: set, targets: set) -> float:
-    return len(tags & targets) / max(1, len(targets))
+def _domain(goal: str) -> tuple[str, ...] | None:
+    text = goal.casefold()
+    matches = [(phrase, anchors) for phrase, anchors in DOMAIN_ANCHORS.items() if phrase in text]
+    return max(matches, key=lambda v: len(v[0]))[1] if matches else None
 
-def _score(row, known, goal, profile, history, weights, feedback):
-    skills = set(row["skills"])
-    level = LEVEL[row["difficulty"]]
-    preferred = LEVEL.get(profile["difficulty"], 0)
+def _has_anchor(row: dict, anchors: tuple[str, ...]) -> bool:
+    # Only title and skill tags, never broad descriptions, count as evidence
+    # for strict engineering domains.
+    title = (row.get("title") or "").casefold()
+    skills = " ".join(row.get("skills", [])).casefold()
+    text = title + " " + skills
+    return any(re.search(r"(?<!\w)" + re.escape(anchor) + r"(?!\w)", text)
+               for anchor in anchors)
+
+def _document(row: dict) -> str:
+    title = row.get("title", "")
+    skills = " ".join(row.get("skills", []))
+    desc = row.get("description", "")[:1100]
+    return ((title + " ") * 4 + (skills + " ") * 2 + desc).strip()
+
+_INDEX = {}
+def _corpus_index(catalog: list[dict]):
+    # Rebuild if a different imported catalog/version replaces the starter data.
+    key = (len(catalog), catalog[0]["id"], catalog[-1]["id"], catalog[0].get("title"))
+    if key not in _INDEX:
+        vectorizer = TfidfVectorizer(stop_words="english", ngram_range=(1, 2),
+                                     max_features=90000, sublinear_tf=True, min_df=1)
+        matrix = vectorizer.fit_transform([_document(row) for row in catalog])
+        _INDEX.clear()
+        _INDEX[key] = (vectorizer, normalize(matrix))
+    return _INDEX[key]
+
+def _retrieve(goal: str, catalog: list[dict]) -> tuple[list[tuple[float,dict]], dict]:
+    if not goal.strip():
+        return [], {"matches": 0, "query": goal}
+    vocab = goal_skills(goal, catalog)
+    query_terms = [word for word in re.findall(r"[a-z0-9]+", goal.lower()) if word not in STOP]
+    query = " ".join([goal] * 3 + vocab + [" ".join(query_terms)])
+    vectorizer, matrix = _corpus_index(catalog)
+    query_vector = vectorizer.transform([query])
+    similarities = (matrix @ query_vector.T).toarray().ravel()
+    anchors = _domain(goal)
+    matched = [(float(score), row) for score, row in zip(similarities, catalog)
+               if score >= .045 and (not anchors or _has_anchor(row, anchors))]
+    matched.sort(key=lambda pair: (-pair[0], pair[1]["id"]))
+    top = matched[0][0] if matched else 0.
+    cutoff = max(.055, min(.16, top * .20))
+    pool = [(score,row) for score,row in matched if score >= cutoff][:360]
+    return pool, {"matches": len(pool), "query": goal, "anchor_filter": bool(anchors),
+                  "top_similarity": round(top,4)}
+
+def _score(row, known, goals, relevance, preferred, history, weights, feedback):
+    skills = set(row.get("skills", []))
+    overlap = len(skills & known) / max(1,len(known))
     features = {
-        "goal": _similarity(skills, goal),
-        "skills": _similarity(skills, known),
-        "difficulty": 1.0 if level == preferred else (0.75 if level < preferred else 0.0),
-        "quality": row["popularity"],
-        "readiness": 1.0 if not row["prerequisites"] else len(set(row["prerequisites"]) & known) / len(row["prerequisites"]),
+        "goal": min(1., relevance),
+        "skills": overlap,
+        "difficulty": 1. if row["difficulty"] == preferred else .68,
+        "quality": row.get("popularity", .5),
+        "readiness": 1. if not row.get("prerequisites") else
+            len(set(row["prerequisites"]) & known) / max(1,len(row["prerequisites"])),
     }
-    raw = sum(features[k] * weights[k] for k in weights)
-    duplicates = sum(1 for s in skills if history[s] > 0)
-    diversity = min(.17, .035 * duplicates)
-    # Avoid recommending an intro course that teaches nothing new.
-    already_mastered = .28 if skills.issubset(known) else 0.0
-    feedback_bonus = max(-.05, min(.05, .025 * feedback.get(row["id"], 0)))
-    return round(max(0., min(1., raw - diversity - already_mastered + feedback_bonus)) * 100, 1), features
-
-def _why(row: dict, newly: list[str], target: set[str]) -> str:
-    aligned = [s for s in row["skills"] if s in target]
-    if aligned:
-        focus = ", ".join(aligned[:2])
-        return f"Build {focus} with {row['title']}. " + (
-            f"Your existing knowledge covers its prerequisites." if row["prerequisites"] else
-            "A solid next step with no required prior concepts."
-        )
-    return f"Develop {', '.join(newly[:2]) or row['skills'][0]} to strengthen the foundations for your goal."
+    # The goal weight can never be won by generic quality/difficulty alone:
+    # retrieval must have passed the semantic/lexical relevance gate first.
+    raw = sum(features[k]*weights[k] for k in weights)
+    diversity = min(.22, .035*sum(history.get(s,0) for s in skills))
+    already_known = .26 if skills and skills.issubset(known) else 0.
+    fb = max(-.025,min(.025,.008*feedback.get(row["id"],0)))
+    return round(max(0.,min(1.,raw - diversity - already_known + fb))*100,1), features
 
 def recommend(profile: dict, catalog: list[dict], feedback: dict | None = None,
               weights: dict | None = None, limit: int = 5) -> dict:
-    feedback = feedback or {}
-    weights = weights or DEFAULT_WEIGHTS
-    limit = max(1, min(7, int(limit)))
-    preferred = profile.get("difficulty", "Beginner")
+    if not catalog:
+        return {"path":[], "goal_skills":[], "total_hours":0, "estimated_weeks":0,
+                "guardrails":{}, "catalog_size":0, "matched_resources":0,
+                "no_matches_reason":"No course catalogue has been loaded."}
+    preferred = profile.get("difficulty","Beginner")
     if preferred not in LEVEL:
-        preferred = "Beginner"
-    hours_per_week = max(1, min(80, int(profile.get("hours_per_week", 6))))
-    profile = {**profile, "difficulty": preferred}
-    known = {str(s).lower().strip() for s in profile.get("current_skills", []) if str(s).strip()}
-    completed = set(str(s) for s in profile.get("completed_courses", []))
+        raise ValueError("Invalid difficulty")
+    hours = max(1,min(80,int(profile.get("hours_per_week",6))))
+    weights = weights or (SKILLS_FIRST if profile.get("mode") == "similar" else DEFAULT_WEIGHTS)
+    feedback = feedback or {}
+    known = {str(s).casefold().strip() for s in profile.get("current_skills",[]) if str(s).strip()}
+    completed = {str(s) for s in profile.get("completed_courses", [])}
     for row in catalog:
-        if row["id"] in completed:
-            known.update(row["skills"])
-    goal = set(goal_skills(profile.get("goal", ""), catalog))
-    history = Counter()
-    used = set(completed)
-    path = []
-    week = 1
-    counts = {"difficulty": 0, "prerequisites": 0, "completed": len(completed)}
-    for step in range(limit):
+        if row["id"] in completed: known.update(row["skills"])
+    targets = set(goal_skills(profile.get("goal",""),catalog))
+    pool, retrieval = _retrieve(profile.get("goal",""),catalog)
+    used, history, path, week = set(completed), Counter(), [], 1
+    excluded = {"difficulty":0,"prerequisites":0,"completed":len(completed)}
+    for i in range(max(1,min(7,int(limit)))):
         candidates = []
-        for row in catalog:
-            if row["id"] in used:
-                continue
+        for relevance,row in pool:
+            if row["id"] in used: continue
             if LEVEL[row["difficulty"]] > LEVEL[preferred]:
-                if step == 0:
-                    counts["difficulty"] += 1
+                if i==0: excluded["difficulty"]+=1
                 continue
             if not set(row["prerequisites"]).issubset(known):
-                if step == 0:
-                    counts["prerequisites"] += 1
+                if i==0: excluded["prerequisites"]+=1
                 continue
-            score, breakdown = _score(row, known, goal, profile, history, weights, feedback)
-            # Prefer goal-relevant and foundational courses over low-value filler.
-            if goal and not (set(row["skills"]) & goal) and not (set(row["skills"]) & known):
-                score = max(0., round(score - 15., 1))
-            candidates.append((score, row["id"], row, breakdown))
-        if not candidates:
-            break
-        candidates.sort(key=lambda x: (-x[0], x[1]))
-        score, _, selected, breakdown = candidates[0]
+            score,features = _score(row,known,targets,relevance,preferred,history,weights,feedback)
+            candidates.append((score,relevance,row["id"],row,features))
+        if not candidates: break
+        candidates.sort(key=lambda item:(-item[0],-item[1],item[2]))
+        score,relevance,_,selected,features = candidates[0]
         used.add(selected["id"])
         new_skills = [s for s in selected["skills"] if s not in known]
-        duration = max(1, ceil(selected["hours"] / hours_per_week))
+        duration=max(1,ceil(selected["hours"]/hours))
+        target_skills=[s for s in selected["skills"] if s in targets]
+        why=("Matches your goal through " + ", ".join(target_skills[:2]) + "."
+             if target_skills else
+             "Relevant to your goal based on the course title, skills, and description.")
         path.append({
-            **selected, "rank": step + 1, "score": score,
-            "feature_breakdown": {k: round(v, 3) for k, v in breakdown.items()},
-            "why": _why(selected, new_skills, goal),
-            "new_skills": new_skills,
-            "duration_weeks": duration, "start_week": week,
-            "end_week": week + duration - 1,
+            **selected,"rank":i+1,"score":score,"text_relevance":round(relevance,3),
+            "feature_breakdown":{k:round(v,3) for k,v in features.items()},
+            "why":why,"new_skills":new_skills,
+            "duration_weeks":duration,"start_week":week,"end_week":week+duration-1
         })
         week += duration
         known.update(selected["skills"])
         history.update(selected["skills"])
+    reason=None
+    if not pool:
+        reason="No sufficiently relevant learning resources were found for this topic. Try a more specific subject or import an expanded catalogue."
+    elif not path:
+        reason="Related resources exist, but none satisfy your selected difficulty and known prerequisites. Try Intermediate or add your existing skills."
+    summary=("Start with " + path[0]["title"] + ", then build towards " +
+             path[-1]["title"] + "." if path else reason)
     return {
-        "path": path,
-        "goal_skills": sorted(goal),
-        "total_hours": round(sum(row["hours"] for row in path), 1),
-        "estimated_weeks": week - 1,
-        "guardrails": {
-            "difficulty": "Hard limit: no courses above your selected level",
-            "prerequisites": "Every selected course's prerequisites were met before its step",
-            "diversity": "Repeated skill topics are downweighted",
-            "time": f"Course time is scheduled across {hours_per_week} hours/week",
-            "excluded_at_start": counts,
+        "path":path,"goal_skills":sorted(targets),
+        "total_hours":round(sum(row["hours"] for row in path),1),
+        "estimated_weeks":week-1,"matched_resources":retrieval["matches"],
+        "retrieval":retrieval,"no_matches_reason":reason,
+        "path_summary":summary,"explanation_source":"template",
+        "catalog_size":len(catalog),
+        "guardrails":{
+            "difficulty":"No courses above selected level",
+            "prerequisites":"Enforced when prerequisite metadata exists; missing metadata is labelled unknown",
+            "diversity":"Repeated skill topics are downweighted",
+            "time":f"Scheduled at {hours} hours/week",
+            "excluded_at_start":excluded,
         },
-        "catalog_size": len(catalog),
-        "data_status": "Curated starter demonstration catalogue; not a downloaded MOOCCube dataset.",
+        "data_status":"Public metadata ranking where available; course difficulty and missing prerequisites may be approximate."
     }
-
-def explain_with_llm(path: list[dict], goal: str) -> list[dict]:
-    """Optional Gemini post-hoc prose only; never feeds text into the ranker."""
-    if os.getenv("ENABLE_LLM", "false").lower() != "true" or not os.getenv("GEMINI_API_KEY"):
-        return path
-    key = os.getenv("GEMINI_API_KEY", "")
-    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-    output = []
-    for row in path[:3]:
-        cache_key = (row["id"], goal[:150])
-        if cache_key not in _STORED:
-            prompt = (
-                "In one sentence explain why this course helps the learner; do not invent any facts. "
-                "Only use the given details. Goal: " + goal[:250] +
-                "; Course: " + row["title"] + "; skills: " + ", ".join(row["skills"]) +
-                "; prerequisites: " + ", ".join(row["prerequisites"])
-            )
-            payload = json.dumps({"contents": [{"parts": [{"text": prompt}]}],
-                                  "generationConfig": {"temperature": 0.2, "maxOutputTokens": 120}}).encode()
-            request = Request(
-                f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}",
-                data=payload, headers={"Content-Type": "application/json"}, method="POST")
-            try:
-                with urlopen(request, timeout=5) as response:
-                    data = json.load(response)
-                _STORED[cache_key] = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-            except (ValueError, KeyError, IndexError, OSError):
-                _STORED[cache_key] = row["why"]
-        output.append({**row, "why": _STORED[cache_key]})
-    return output + path[3:]

@@ -9,6 +9,8 @@ const SUGGESTIONS = [
   "Build web applications",
   "Start learning data analysis",
   "Become an AI engineer",
+  "Study Signals and Systems",
+  "Learn digital signal processing",
 ];
 const FALLBACK_SKILLS = ["python", "sql", "statistics", "javascript", "html", "css", "git", "pandas", "machine learning", "react", "api", "excel", "visualization"];
 
@@ -53,7 +55,7 @@ export default function BuildPage({ profile, meta, metaError, onGenerate }) {
         </form>
         <aside className="builder-aside"><div className="aside-inner"><span className="aside-stamp">YOUR JOURNEY / MADE TO FIT</span><div className="aside-orbit"><div className="orbit-1"/><div className="orbit-2"/><span>YOU<br/>↗</span></div><h3>SMALL STEPS.<br/>BIG SHIFTS.</h3><p>We filter by difficulty and prerequisites, order resources by fit, and stretch course durations across your weekly time budget.</p><div className="aside-stats"><span>HYBRID RANKING</span><span>PREREQUISITE CHECKS</span><span>EXPLAINABLE PICKS</span></div></div></aside>
       </div>
-      <div className="data-note">DATA NOTE: This version uses a curated demonstration catalogue. Scores and learning durations are illustrative, not guarantees of learning outcomes.</div>
+      <div className="data-note">DATA NOTE: The course catalogue uses a public historical snapshot plus selected MIT OCW resources when imported. Estimated durations and rankings are not guarantees of learning outcomes.</div>
     </div>
   </main>;
 }

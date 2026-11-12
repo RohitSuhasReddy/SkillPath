@@ -1,4 +1,6 @@
-import catalogue from "../data/resources.json";
+import starterCatalogue from "../data/resources.json";
+import publicCatalogue from "../data/public_courses.json";
+const catalogue = publicCatalogue.length > 3000 ? publicCatalogue : starterCatalogue;
 
 /**
  * Browser-only fallback for the portfolio demo.
@@ -10,6 +12,8 @@ const WEIGHTS = { goal: 0.45, skills: 0.12, difficulty: 0.18, quality: 0.13, rea
 const SKILLS_FIRST = { goal: 0.25, skills: 0.32, difficulty: 0.18, quality: 0.13, readiness: 0.12 };
 const GOAL_FIRST = { goal: 0.65, skills: 0.08, difficulty: 0.12, quality: 0.08, readiness: 0.07 };
 const GOAL_MAP = [
+  ["signals and systems", ["signal processing", "signals and systems", "fourier transform", "convolution", "lti systems", "sampling"]],
+  ["signal processing", ["signal processing", "signals and systems", "fourier transform", "sampling", "digital filters"]],
   ["data scientist", ["python","statistics","pandas","machine learning","scikit-learn"]],
   ["data science", ["python","statistics","pandas","machine learning","scikit-learn"]],
   ["data analyst", ["sql","excel","python","pandas","visualization"]],
@@ -48,14 +52,41 @@ function writeVote(id, helpful) {
   try { localStorage.setItem("skillpath.demo-feedback.v1", JSON.stringify(votes)); } catch {}
 }
 
-export function offlineRecommend(profile, limit = 5, weights = null, useFeedback = true) {
+
+const STOP_WORDS = new Set(["i","want","to","a","an","the","become","learn","learning","course","courses","of","for","in","with","and","my","about","study","studying","fundamentals"]);
+function relevanceScore(course, searchGoal, tags) {
+  const text=normalize(searchGoal);
+  const title=normalize(course.title);
+  const skills=normalize(asArray(course.skills).join(" "));
+  const desc=normalize(course.description).slice(0,750);
+  const searchTerms=[...new Set([...text.split(/[^a-z0-9]+/), ...tags.flatMap(s=>s.split(/[^a-z0-9]+/))])]
+    .filter(s=>s.length>2 && !STOP_WORDS.has(s));
+  if (!searchTerms.length) return 0;
+  const anchors=text.includes("signals and systems") ? ["signal","fourier","convolution","laplace","lti","dsp"]
+    : text.includes("signal processing") ? ["signal","fourier","sampling","filter","convolution","dsp"]
+    : text.includes("operating systems") ? ["operating system","kernel","process scheduling","memory management"] : null;
+  if (anchors && !anchors.some(term=>(title+" "+skills).includes(term))) return 0;
+  let hits=0;
+  for (const term of searchTerms) {
+    if (title.includes(term)) hits+=3;
+    else if (skills.includes(term)) hits+=2.5;
+    else if (desc.includes(term)) hits+=.65;
+  }
+  return Math.min(1,hits / Math.max(3,searchTerms.length*2));
+}
+
+export function offlineRecommend(profile, limit = 5, weights = null, useFeedback = true, activeCatalogue = catalogue) {
   if (!profile?.goal || normalize(profile.goal).length < 3) throw new Error("Enter a learning goal with at least 3 characters.");
   if (!(profile.difficulty in LEVEL)) throw new Error("Choose Beginner, Intermediate, or Advanced.");
   const weekHours = clamp(Number(profile.hours_per_week) || 6, 1, 80);
   const goal = new Set(offlineGoalSkills(profile.goal));
   const mastered = new Set(asArray(profile.current_skills).map(normalize).filter(Boolean));
   const completed = new Set(asArray(profile.completed_courses));
-  for (const course of catalogue) if (completed.has(course.id)) course.skills.forEach(s => mastered.add(s));
+  for (const course of activeCatalogue) if (completed.has(course.id)) course.skills.forEach(s => mastered.add(s));
+  // Rank within the topic-relevant pool only. Never fill empty steps with unrelated courses.
+  const pool = activeCatalogue.map(course => ({course, relevance:relevanceScore(course,profile.goal,[...goal])}))
+    .filter(row => row.relevance >= .085)
+    .sort((a,b) => b.relevance-a.relevance).slice(0,260);
   const history = {};
   const used = new Set(completed);
   const path = [];
@@ -65,7 +96,7 @@ export function offlineRecommend(profile, limit = 5, weights = null, useFeedback
   const excluded = {difficulty: 0, prerequisites: 0, completed: completed.size};
   for (let step = 0; step < clamp(limit,1,7); step++) {
     const candidates = [];
-    for (const course of catalogue) {
+    for (const {course,relevance} of pool) {
       if (used.has(course.id)) continue;
       if (LEVEL[course.difficulty] > LEVEL[profile.difficulty]) {
         if (step === 0) excluded.difficulty++;
@@ -78,7 +109,7 @@ export function offlineRecommend(profile, limit = 5, weights = null, useFeedback
       const tags = new Set(course.skills);
       const overlap = (set) => [...tags].filter(s => set.has(s)).length / Math.max(1, set.size);
       const features = {
-        goal: overlap(goal),
+        goal: Math.max(overlap(goal), relevance),
         skills: overlap(mastered),
         difficulty: course.difficulty === profile.difficulty ? 1 : 0.75,
         quality: course.popularity,
@@ -89,8 +120,8 @@ export function offlineRecommend(profile, limit = 5, weights = null, useFeedback
       const feedback = clamp(0.025 * (votes[course.id] || 0), -0.05, 0.05);
       const raw = Object.entries(factors).reduce((sum, [name, weight]) => sum + features[name] * weight, 0);
       let score = round(clamp((raw - diversity - alreadyKnown + feedback) * 100, 0, 100), 1);
-      if (goal.size && !intersects(tags, goal) && !intersects(tags, mastered)) score = Math.max(0, round(score - 15,1));
-      candidates.push({ course, score, features });
+      // Topic relevance must be above threshold before scoring.
+      candidates.push({ course, score, features, relevance });
     }
     if (!candidates.length) break;
     candidates.sort((a,b) => b.score - a.score || a.course.id.localeCompare(b.course.id));
@@ -116,7 +147,13 @@ export function offlineRecommend(profile, limit = 5, weights = null, useFeedback
     path, goal_skills: [...goal].sort(),
     total_hours: round(path.reduce((sum,r) => sum + r.hours,0),1),
     estimated_weeks: startWeek - 1,
-    catalog_size: catalogue.length,
+    catalog_size: activeCatalogue.length,
+    matched_resources: pool.length,
+    no_matches_reason: !pool.length ? "No sufficiently relevant courses were found in the catalogue. Try a more specific topic or import a broader dataset." : !path.length ? "Related courses were found, but none meet your selected difficulty and known prerequisite requirements." : null,
+    catalog_source:activeCatalogue === starterCatalogue ? "Starter demo" : "Coursera metadata + MIT OpenCourseWare",
+    is_public_catalog:activeCatalogue !== starterCatalogue,
+    llm_status:"backend_offline", explanation_source:"template",
+    path_summary:path.length ? "Begin with "+path[0].title+" and progress toward "+path[path.length-1].title+"." : "",
     guardrails: {
       difficulty: "Courses above the selected level are excluded",
       prerequisites: "Prerequisites are checked at every step",
@@ -147,7 +184,7 @@ function metrics(ids, relevant) {
 }
 function averageMetrics(personas, weights) {
   const results = personas.map(persona => {
-    const ids = offlineRecommend({...persona,mode:"goal"},7,weights,false).path.map(r=>r.id);
+    const ids = offlineRecommend({...persona,mode:"goal"},7,weights,false,starterCatalogue).path.map(r=>r.id);
     return metrics(ids,persona.relevant);
   });
   return Object.fromEntries(["precision_at_5","ndcg_at_5","mrr"].map(key => [key,round(results.reduce((s,r)=>s+r[key],0)/results.length)]));
@@ -169,7 +206,7 @@ function offlineEvaluation() {
   const clicks = Array.from({length:250},(_,index) => ({persona:PERSONAS[index % PERSONAS.length],roll:rand()}));
   function ctr(weights) {
     const success = clicks.reduce((sum,{persona,roll}) => {
-      const ids = offlineRecommend({...persona,mode:"goal"},5,weights,false).path.map(r=>r.id);
+      const ids = offlineRecommend({...persona,mode:"goal"},5,weights,false,starterCatalogue).path.map(r=>r.id);
       const score = ids.reduce((acc,id,index)=>acc + (persona.relevant.includes(id) ? 1/(index+1) : 0),0);
       return sum + Number(roll < Math.min(0.82,0.08 + 0.20*score));
     },0);
@@ -197,20 +234,22 @@ export function offlineRequest(path, options = {}) {
   switch(url.pathname) {
     case "/health":return {status:"browser-demo",resources:catalogue.length};
     case "/meta":return {
-      skills:[...new Set(catalogue.flatMap(c=>c.skills))].sort(),
+      skills:[...new Set(catalogue.flatMap(c=>c.skills).filter(s=>s.length<58))].sort().slice(0,140),
       categories:[...new Set(catalogue.map(c=>c.category))].sort(),
       resource_count:catalogue.length,
-      dataset:"curated-starter-demo-v1",engine_mode:"browser-demo"
+      dataset:catalogue===starterCatalogue?"Starter demo":"Coursera metadata + MIT OCW",is_public_catalog:catalogue!==starterCatalogue,llm:{enabled:false,status:"backend_offline"},engine_mode:"browser-demo"
     };
     case "/catalog": {
       const q=normalize(url.searchParams.get("q"));
       const category=normalize(url.searchParams.get("category"));
       const difficulty=normalize(url.searchParams.get("difficulty"));
-      const resources=catalogue.filter(r=>
+      const matches=catalogue.filter(r=>
         (!q || (r.title+" "+r.description+" "+r.skills.join(" ")).toLowerCase().includes(q))
         && (!category || normalize(r.category)===category)
         && (!difficulty || normalize(r.difficulty)===difficulty));
-      return {resources,total:resources.length,engine_mode:"browser-demo"};
+      const page=Math.max(1,Number(url.searchParams.get("page") || 1));
+      const pageSize=Math.min(60,Math.max(1,Number(url.searchParams.get("page_size") || 18)));
+      return {resources:matches.slice((page-1)*pageSize,page*pageSize),total:matches.length,page,page_size:pageSize,engine_mode:"browser-demo"};
     }
     case "/recommend":return offlineRecommend(body.profile,body.limit);
     case "/feedback":{
