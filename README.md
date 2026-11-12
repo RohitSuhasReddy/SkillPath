@@ -1,94 +1,97 @@
-# SkillPath — Personalized Learning Paths
+# SkillPath
 
-SkillPath builds explainable 3–7-step course recommendations using topic relevance, goal fit, difficulty, prerequisite metadata where available, available hours, and anonymous feedback.
+**Learn what matters next.** SkillPath turns a learning goal, your existing skills, and a weekly time budget into a practical 3–7-step course plan.
 
-## What works
+Built with **React + FastAPI**, a search-first hybrid ranker, optional **Gemini explanations**, and an offline evaluation lab.
 
-- Cinematic dark landing, cursor-driven image parallax, slowly **rotating starfield**, animated original SKILL/PATH wordmark and four scrolling/sticky feature panels.
-- Separate pages for Build Your Path, Discover, My Path, and Evaluation Lab.
-- Search-first hybrid ranking: TF-IDF n-grams across course title/skills/description, an explicit relevance gate, then difficulty, skill match, quality proxy, prerequisites, diversity and study hours.
-- Optional cached Gemini explanations and summary (post-hoc text generation only; never ranking).
-- Offline metrics, feature ablation, and seeded simulated A/B experiments. The current evaluation harness uses **5 hand-labelled demonstration personas**, NOT real learner interactions.
+## What's inside
 
-## Public course data
+| Page | What you can do |
+| --- | --- |
+| **Home** | Explore the dark, motion-led landing page |
+| **Build a path** | Enter your goal, current skills, level, and study hours |
+| **Discover** | Search and filter **6,651** course records |
+| **My path** | See ranked courses, reasoning, prerequisites where known, and weekly pacing |
+| **Evaluation lab** | Compare Precision@5, NDCG@5, MRR, ablations, and simulated A/B results |
 
-**English primary catalog:** [azrai99/coursera-course-dataset](https://huggingface.co/datasets/azrai99/coursera-course-dataset) — a public ~6,650-course metadata snapshot with source-card Apache-2.0 licensing. SkillPath ingests titles, descriptions, skills, organizations, links, difficulty, ratings, schedule estimates.
+The ranker retrieves topic-relevant courses *before* applying difficulty, skill match, quality, and other guardrails. If no suitable matches exist, it says so rather than recommending unrelated subjects.
 
-**Engineering supplement:** six verified public MIT OpenCourseWare resource links, including Signals and Systems (6.003), its introductory lecture series, and Discrete-Time Signal Processing. Skill tags and estimated hours for these rows are project-curated, not official MIT metadata.
+## Run locally
 
-**Optional research extension:** [MOOCCubeX](https://github.com/THU-KEG/MOOCCubeX) provides a larger concept/interaction corpus. **MOOCCubeX data has not been imported** in this build; it is Chinese-heavy and much more expensive to process. We don't claim to have it when we don't.
+Requires **Python 3.10+**, **Node.js 20+**, and Windows PowerShell.
 
-An automated GitHub Actions import downloads the licensed course snapshot, normalizes it, and commits both backend and browser-readable catalogs. See .github/workflows/import-public-catalog.yml and backend/scripts/build_public_catalog.py. To regenerate using your own CSV:
+**First time only** — run these from the repository root:
 
-~~~powershell
-python backend/scripts/build_public_catalog.py --input .\path\to\coursera_course_2024.csv
-~~~
+```powershell
+git clone https://github.com/RohitSuhasReddy/SkillPath.git
+cd SkillPath
 
-Or run the same command without --input to download it. This is a **one-time ingestion**, not something repeated on every startup.
-
-**Dataset limitations:** Course metadata does not guarantee free access or current availability. Original course prerequisites are frequently missing; SkillPath labels them unknown and never invents them. Topic tags, difficulty, durations and popularity scores can be estimated. Study plans are suggestions, not academic degree advising.
-
-## Start SkillPath on Windows
-
-First-time environment setup (Python 3.10+, Node.js 20+):
-
-~~~powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+
 cd frontend
 npm install
 cd ..
-~~~
+```
 
-For **all later launches**, from the repo root:
+**Everyday launch** — from the SkillPath folder:
 
-~~~powershell
+```powershell
 .\run-dev.ps1
-~~~
+```
 
-This starts FastAPI (http://127.0.0.1:8000/docs) and React (http://localhost:5173). The launcher checks installed packages and **does not download them repeatedly**. For the browser-only demo, cd frontend then npm run dev. Browser fallback uses the bundled public catalog after import, or a labelled 31-record demo before import.
+The launcher opens **FastAPI** and **Vite** in separate terminals using your existing dependencies. It doesn't reinstall anything.
 
-## Gemini setup (private API key)
+- **App:** http://localhost:5173
+- **API docs:** http://127.0.0.1:8000/docs
 
-Gemini is available in the backend, but **no live API call is possible until you configure a key**. Create a key at [Google AI Studio](https://aistudio.google.com/apikey), copy backend/.env.example to backend/.env and fill:
+To run *just* the frontend, use `cd frontend; npm run dev`. If the API is offline, SkillPath switches to a **labeled browser demo**; Gemini won't run in that mode.
 
-~~~dotenv
+## Gemini (optional)
+
+Gemini writes short explanations for the **already-ranked** courses. It never decides their scores or order. To enable it:
+
+```powershell
+if (!(Test-Path backend\.env)) { Copy-Item backend\.env.example backend\.env }
+notepad backend\.env
+```
+
+Set these values in `backend/.env`:
+
+```dotenv
 ENABLE_LLM=true
-GEMINI_API_KEY=your_private_key_here
+GEMINI_API_KEY=your_private_key
 GEMINI_MODEL=gemini-2.5-flash
-~~~
+```
 
-Restart FastAPI. The backend loads this .env automatically. NEVER commit or paste your key into the frontend. The backend sends up to 3 ranked course records in one low-temperature Gemini request, caches responses in a local SQLite database, and retains template explanations if unavailable. It does not allow the model to rank or change any course.
+Get a key from [Google AI Studio](https://aistudio.google.com/apikey), then restart the backend. The key stays on the server; `.env` is ignored by Git. Without a key, the app uses deterministic explanations.
 
-## Architecture and evidence
+## Data and evaluation
 
-~~~text
-Free-text goal + existing skills + time
-  → Search index: TF-IDF and domain-specific relevance gate
-  → Candidate pool (no irrelevant fillers)
-  → Hybrid scoring and prerequisite/difficulty filters
-  → Sequential 3–7-step path with weekly duration estimates
-  → Optional cached Gemini explanations
-  → React user interface + local feedback
+- **6,645 course records:** [English Coursera metadata snapshot](https://huggingface.co/datasets/azrai99/coursera-course-dataset) (2024).
+- **6 engineering resources:** [MIT OpenCourseWare](https://ocw.mit.edu/) links, including Signals and Systems.
+- **Source details:** [dataset provenance](backend/data/SOURCES.md).
 
-Offline Evaluation (5 hand-labelled demo personas):
-  → Precision@5, NDCG@5, MRR
-  → Feature ablation (goal, skill, difficulty, quality, readiness)
-  → Reproducible synthetic A/B comparison
-~~~
+The dataset is bundled with the repo. To rebuild it from the public source **only when needed**:
 
-API: GET /api/health, GET /api/meta, GET /api/catalog (paginated), POST /api/recommend, GET /api/evaluation, POST /api/feedback.
+```powershell
+python backend/scripts/build_public_catalog.py
+```
 
-## Test and build
+Course availability, prices, prerequisites, and durations are not always verified in the source metadata. The evaluation lab uses **five labeled demo profiles and simulated interactions**—not real learner outcomes. MOOCCubeX is *not* imported.
 
-~~~powershell
+## Tests
+
+```powershell
 cd backend
 python -m pytest -q
-cd ..\frontend
+cd ../frontend
 npm run test:unit
 npm run build
-~~~
+```
 
-GitHub Actions runs the same checks. Tests include **Signals and Systems** relevance regression (no unrelated Docker/Python courses), prerequisite/difficulty constraints, import parsing, and Gemini without a key.
+GitHub Actions checks both sides of the app. For a quick API check, open `http://127.0.0.1:8000/api/health`.
 
-This project intentionally does not scrape paid course platforms, enroll users, or serve course videos.
+---
+
+SkillPath is a **portfolio/research prototype** for recommendation systems, ranking, evaluation, and explainability—not a course hosting platform.
