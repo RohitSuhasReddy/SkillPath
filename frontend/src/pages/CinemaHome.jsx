@@ -208,12 +208,12 @@ export default function CinemaHome({ resourceCount }) {
   return <main className="cinema-home">
     <section ref={heroRef} className="cinema-hero" aria-label="Welcome to SkillPath">
       <div className="cinema-vignette"/>
-      <div className="cinema-layer cinema-stars" data-depth="11" aria-hidden="true">
+      <div className="cinema-layer cinema-stars" data-depth="11" aria-hidden="true"><div className="cinema-starfield-rotor">
         {DOTS.map((dot, index) => <i key={index} style={{ left: dot.x + "%", top: dot.y + "%", width: dot.size, height: dot.size, opacity: dot.opacity }}/>)}
-      </div>
+      </div></div>
       <div className="cinema-photos">{PHOTOS.map((photo, index) => <FloatingPhoto photo={photo} index={index} key={photo.key}/>)}</div>
       <div className="cinema-topbar">
-        <Link to="/" className="cinema-logo" aria-label="SkillPath home">SKILL<span>/</span>PATH</Link>
+        <Link to="/" className="cinema-logo" aria-label="SkillPath home"><span className="cinema-logo-part">SKILL</span><span className="cinema-logo-slash">/</span><span className="cinema-logo-part">PATH</span><i className="cinema-logo-shine"/></Link>
         <button className="cinema-menu-toggle" type="button" aria-expanded={menuOpen} aria-controls="cinema-nav" onClick={() => setMenuOpen(!menuOpen)}><span>/</span> {menuOpen ? "Close" : "Menu"}</button>
         <Link to="/build" className="cinema-session">START YOUR PATH <ArrowUpRight size={17}/></Link>
       </div>

@@ -36,9 +36,9 @@ if (-not $pythonExe) {
     throw "Python not found. Create the environment once: python -m venv .venv ; .\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt"
 }
 
-& $pythonExe -c "import uvicorn, fastapi" 2>$null
+& $pythonExe -c "import uvicorn, fastapi, sklearn, dotenv, google.genai" 2>$null
 if ($LASTEXITCODE -ne 0) {
-    throw "Backend dependencies are not installed in the detected Python environment. Run '.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt' ONCE."
+    throw "One-time backend dependency update required (not every launch). Run '.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt' ONCE."
 }
 
 Write-Host ""

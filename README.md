@@ -1,145 +1,94 @@
-# SkillPath ↗
+# SkillPath — Personalized Learning Paths
 
-**Find the next thing worth learning.** A multi-page, motion-forward learning-path recommender powered by an explainable hybrid ranking engine, hard prerequisite/difficulty guardrails, and a transparent offline evaluation lab.
+SkillPath builds explainable 3–7-step course recommendations using topic relevance, goal fit, difficulty, prerequisite metadata where available, available hours, and anonymous feedback.
 
-## What it does
+## What works
 
-- **Landing:** cinematic black-and-white hero, mouse-tracked multi-layer photographic parallax, giant typographic section transition, four sticky overlapping image/text panels, subtle scroll reveals, frosted session CTA, and reduced-motion fallbacks.
-- **Build a path:** choose existing skills, goal, level, available hours per week, ranking mode, and 3–7 steps.
-- **Discover:** search/filter the starter catalogue, open public learning resources, mark courses completed.
-- **My path:** dynamically sequenced prerequisites, per-course fit breakdown, time-aware week ranges, explanations, feedback, Markdown export.
-- **Evaluation lab:** synthetic proxy Precision@5 / NDCG@5 / MRR, feature ablation, segment analysis, and fixed-seed simulated A/B comparison.
+- Cinematic dark landing, cursor-driven image parallax, slowly **rotating starfield**, animated original SKILL/PATH wordmark and four scrolling/sticky feature panels.
+- Separate pages for Build Your Path, Discover, My Path, and Evaluation Lab.
+- Search-first hybrid ranking: TF-IDF n-grams across course title/skills/description, an explicit relevance gate, then difficulty, skill match, quality proxy, prerequisites, diversity and study hours.
+- Optional cached Gemini explanations and summary (post-hoc text generation only; never ranking).
+- Offline metrics, feature ablation, and seeded simulated A/B experiments. The current evaluation harness uses **5 hand-labelled demonstration personas**, NOT real learner interactions.
 
-**Design reference:** [Made to Disrupt](https://madetodisrupt.com/#work). The site was unavailable to automated inspection during the first implementation, so the reference-inspired palette/type live in `frontend/src/styles.css` and can be visually calibrated. No reference artwork, code, or animations are copied. Hero illustrations are SkillPath-specific CSS artwork.
+## Public course data
 
-## Tech stack
+**English primary catalog:** [azrai99/coursera-course-dataset](https://huggingface.co/datasets/azrai99/coursera-course-dataset) — a public ~6,650-course metadata snapshot with source-card Apache-2.0 licensing. SkillPath ingests titles, descriptions, skills, organizations, links, difficulty, ratings, schedule estimates.
 
-React 18 + Vite / CSS + Lucide icons → FastAPI + Pydantic → Python rule-aware hybrid scoring → local JSON catalogue + SQLite anonymous feedback. Gemini is **optional and post-ranking only**.
+**Engineering supplement:** six verified public MIT OpenCourseWare resource links, including Signals and Systems (6.003), its introductory lecture series, and Discrete-Time Signal Processing. Skill tags and estimated hours for these rows are project-curated, not official MIT metadata.
 
-## Run locally
+**Optional research extension:** [MOOCCubeX](https://github.com/THU-KEG/MOOCCubeX) provides a larger concept/interaction corpus. **MOOCCubeX data has not been imported** in this build; it is Chinese-heavy and much more expensive to process. We don't claim to have it when we don't.
 
-### One-command launch (after first-time installation)
+An automated GitHub Actions import downloads the licensed course snapshot, normalizes it, and commits both backend and browser-readable catalogs. See .github/workflows/import-public-catalog.yml and backend/scripts/build_public_catalog.py. To regenerate using your own CSV:
 
-From the **SkillPath repository root** on Windows PowerShell:
+~~~powershell
+python backend/scripts/build_public_catalog.py --input .\path\to\coursera_course_2024.csv
+~~~
 
-```powershell
-.\run-dev.ps1
-```
+Or run the same command without --input to download it. This is a **one-time ingestion**, not something repeated on every startup.
 
-This launches **FastAPI** and **React** in separate terminals using your existing Python environment and frontend `node_modules`. It does **not** recreate environments, install packages, or download dependencies. If you previously used `start.bat`, it now invokes this same fast launcher. Open **http://localhost:5173**.
+**Dataset limitations:** Course metadata does not guarantee free access or current availability. Original course prerequisites are frequently missing; SkillPath labels them unknown and never invents them. Topic tags, difficulty, durations and popularity scores can be estimated. Study plans are suggestions, not academic degree advising.
 
-The first time only, install frontend and backend dependencies following the instructions below.
+## Start SkillPath on Windows
 
+First-time environment setup (Python 3.10+, Node.js 20+):
 
-### Fastest start: frontend only (no backend required)
-
-The complete interface now has a **clearly labeled local demo fallback**. Catalogue browsing, profile/path generation, Markdown export, feedback, and synthetic evaluation all work when FastAPI is stopped. Browser-demo feedback is stored only in localStorage, and scores are illustrative—not real-world performance.
-
-Prerequisite: **Node.js 20+**. From the repo root:
-
-```powershell
-cd frontend
-npm install
-npm run dev
-```
-
-Visit **http://localhost:5173**. On later runs, just `npm run dev` inside `frontend/`. You do not need the backend for an interface demo.
-
-### Full stack (recommended for project evaluation)
-
-**After initial setup:** From the repo root, run `.\run-dev.ps1` (or `start.bat`) to launch both servers without reinstalling anything. Python 3.10+ and Node.js 20+ must be installed.
-
-Alternatively, open two PowerShell terminals. First run:
-
-```powershell
+~~~powershell
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r backend/requirements.txt
-cd backend
-python -m uvicorn app.main:app --reload --port 8000
-```
-
-In a second terminal at repo root:
-
-```powershell
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 cd frontend
 npm install
-npm run dev
-```
+cd ..
+~~~
 
-On future runs, activate the existing virtual environment and start uvicorn again; the installed packages can be reused. API docs: **http://localhost:8000/docs**.
+For **all later launches**, from the repo root:
 
-**How it selects a mode:** The frontend first tries FastAPI at `/api` (via the Vite proxy). If the connection fails or the server responds with a 5xx error, the frontend uses its bundled browser-demo engine and displays a clear label. Server validation errors are shown rather than concealed. Restart the API and refresh to return to server-backed mode.
+~~~powershell
+.\run-dev.ps1
+~~~
 
-## Architecture
+This starts FastAPI (http://127.0.0.1:8000/docs) and React (http://localhost:5173). The launcher checks installed packages and **does not download them repeatedly**. For the browser-only demo, cd frontend then npm run dev. Browser fallback uses the bundled public catalog after import, or a labelled 31-record demo before import.
 
-```text
-Profile + goal + completed courses
-             |
-     Resource catalogue
-             |
-Skill/goal + difficulty + quality + readiness features
-             |
-  Hybrid scorer + hard guardrails
-  (difficulty, prereqs, diversity)
-             |
-    Sequential 3–7-step plan
-       + weekly schedule
-             |
- Optional Gemini explanation
-      (never changes scores)
-             |
-  React app → path + feedback
-             |
-Offline metrics / ablation / synthetic A/B
-```
+## Gemini setup (private API key)
 
-### API routes
+Gemini is available in the backend, but **no live API call is possible until you configure a key**. Create a key at [Google AI Studio](https://aistudio.google.com/apikey), copy backend/.env.example to backend/.env and fill:
 
-| Route | Purpose |
-|---|---|
-| `GET /api/health` | API/catalogue status |
-| `GET /api/meta` | Skills/categories |
-| `GET /api/catalog` | Filterable resources |
-| `POST /api/recommend` | Ranked learning path |
-| `POST /api/feedback` | Aggregate useful/not-useful vote |
-| `GET /api/evaluation` | Offline synthetic metrics |
+~~~dotenv
+ENABLE_LLM=true
+GEMINI_API_KEY=your_private_key_here
+GEMINI_MODEL=gemini-2.5-flash
+~~~
 
-## Data honesty and importing real datasets
+Restart FastAPI. The backend loads this .env automatically. NEVER commit or paste your key into the frontend. The backend sends up to 3 ranked course records in one low-temperature Gemini request, caches responses in a local SQLite database, and retains template explanations if unavailable. It does not allow the model to rank or change any course.
 
-The included **31 resources are a manually curated demo catalogue** pointing at free learning materials. Estimated course durations and popularity proxies are illustrative; **these are not MOOCCube, MOOCCubeX, or Kaggle data**. Metrics use manually specified proxy relevance labels for five demo personas, **not real users**. A/B results use 250 seeded synthetic assignments and **are not causal/production lift estimates**.
+## Architecture and evidence
 
-To import a licensed, attributed CSV with columns `id,title,description,provider,url,category,difficulty,hours,skills,prerequisites,popularity`:
+~~~text
+Free-text goal + existing skills + time
+  → Search index: TF-IDF and domain-specific relevance gate
+  → Candidate pool (no irrelevant fillers)
+  → Hybrid scoring and prerequisite/difficulty filters
+  → Sequential 3–7-step path with weekly duration estimates
+  → Optional cached Gemini explanations
+  → React user interface + local feedback
 
-```powershell
-cd backend
-python scripts/import_catalog.py path/to/resources.csv data/imported.json
-$env:SKILLPATH_CATALOG="data/imported.json"
-python -m uvicorn app.main:app --reload --port 8000
-```
+Offline Evaluation (5 hand-labelled demo personas):
+  → Precision@5, NDCG@5, MRR
+  → Feature ablation (goal, skill, difficulty, quality, readiness)
+  → Reproducible synthetic A/B comparison
+~~~
 
-Skill lists can be comma- or pipe-separated. Import only files whose license permits use, and maintain attribution in `backend/data/SOURCES.md`. For serious offline evaluation replace demo relevance labels with held-out real interactions/labels.
+API: GET /api/health, GET /api/meta, GET /api/catalog (paginated), POST /api/recommend, GET /api/evaluation, POST /api/feedback.
 
-## Optional explanations with Gemini
+## Test and build
 
-With backend terminal active, set:
-
-```powershell
-$env:ENABLE_LLM="true"
-$env:GEMINI_API_KEY="your_key_here"
-$env:GEMINI_MODEL="gemini-2.5-flash"
-```
-
-Restart the API. Without a key, SkillPath displays deterministic explanations and all ranking functionality still works. No API key is sent to the browser, and key files are gitignored.
-
-## Checks
-
-```powershell
+~~~powershell
 cd backend
 python -m pytest -q
-cd ../frontend
+cd ..\frontend
 npm run test:unit
 npm run build
-```
+~~~
 
-The pipeline runs these checks on GitHub pushes. This is a **portfolio/research prototype**, not a complete learning management system: no scraped paid catalogues, authentication, payments, or course player.
+GitHub Actions runs the same checks. Tests include **Signals and Systems** relevance regression (no unrelated Docker/Python courses), prerequisite/difficulty constraints, import parsing, and Gemini without a key.
+
+This project intentionally does not scrape paid course platforms, enroll users, or serve course videos.
