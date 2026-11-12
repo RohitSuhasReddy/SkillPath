@@ -18,6 +18,19 @@ React 18 + Vite / CSS + Lucide icons → FastAPI + Pydantic → Python rule-awar
 
 ## Run locally
 
+### One-command launch (after first-time installation)
+
+From the **SkillPath repository root** on Windows PowerShell:
+
+```powershell
+.\run-dev.ps1
+```
+
+This launches **FastAPI** and **React** in separate terminals using your existing Python environment and frontend `node_modules`. It does **not** recreate environments, install packages, or download dependencies. If you previously used `start.bat`, it now invokes this same fast launcher. Open **http://localhost:5173**.
+
+The first time only, install frontend and backend dependencies following the instructions below.
+
+
 ### Fastest start: frontend only (no backend required)
 
 The complete interface now has a **clearly labeled local demo fallback**. Catalogue browsing, profile/path generation, Markdown export, feedback, and synthetic evaluation all work when FastAPI is stopped. Browser-demo feedback is stored only in localStorage, and scores are illustrative—not real-world performance.
@@ -34,7 +47,7 @@ Visit **http://localhost:5173**. On later runs, just `npm run dev` inside `front
 
 ### Full stack (recommended for project evaluation)
 
-**Windows quick launch:** From the repo root, double-click `start.bat`. It sets up the Python virtual environment and npm packages if missing, then launches the API and React in separate terminals. Python 3.10+ and Node.js 20+ must be installed.
+**After initial setup:** From the repo root, run `.\run-dev.ps1` (or `start.bat`) to launch both servers without reinstalling anything. Python 3.10+ and Node.js 20+ must be installed.
 
 Alternatively, open two PowerShell terminals. First run:
 
