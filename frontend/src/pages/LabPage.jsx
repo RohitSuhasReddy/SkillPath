@@ -21,6 +21,7 @@ export default function LabPage() {
     {loading && <div className="loading-lab">RUNNING OFFLINE EVALUATIONS<span className="loading-dots">...</span></div>}
     {error && <StateNotice>{error}<button className="retry" type="button" onClick={load}><RefreshCcw size={16}/> Retry</button></StateNotice>}
     {data && <>
+      {data.engine_mode === "browser-demo" && <div className="path-demo-banner" role="status">LOCAL EVALUATION MODE · Computed from bundled synthetic demonstration labels, not live experimental results.</div>}
       <div className="lab-metrics">{Object.entries(data.metrics).map(([key,value])=><div className="lab-metric" key={key}><div className="lab-metric-label">{human(key)} <Activity size={17}/></div><strong>{value.toFixed(3)}</strong><PercentBar value={value}/><small>PROXY RELEVANCE / HIGHER IS BETTER</small></div>)}</div>
       <section className="lab-section"><div className="lab-section-title"><div><span>01 / FEATURE ABLATION</span><h2>What actually<br/><em>moves the score?</em></h2></div><p>Remove one ranking signal at a time to see how average relevance changes.</p></div>
       <div className="ablation-panel"><div className="ablation-toolbar"><strong>RANKING SIGNAL CONTRIBUTION</strong><div className="metric-switch">{["ndcg_at_5","precision_at_5","mrr"].map(key=><button type="button" key={key} className={metric===key?"metric-switch-active":""} onClick={()=>setMetric(key)}>{human(key)}</button>)}</div></div>

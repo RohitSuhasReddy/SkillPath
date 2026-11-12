@@ -36,7 +36,7 @@ function Header() {
   const { pathname } = useLocation();
   useEffect(() => setOpen(false), [pathname]);
   return <header className="site-header">
-    <Link to="/" className="brand" aria-label="SkillPath home"><span className="brand-mark"><span>↗</span></span><span>skillpath<span className="brand-period">.</span></span></Link>
+    <Link to="/" className="brand" aria-label="SkillPath home"><span className="brand-word">SKILL<span>/</span>PATH</span></Link>
     <nav className={`main-nav ${open ? "main-nav-open" : ""}`} aria-label="Primary navigation">
       {NAV.map(item => <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => `nav-item ${isActive ? "nav-item-active" : ""}`}>{item.text}</NavLink>)}
     </nav>
@@ -48,7 +48,7 @@ function Header() {
 
 function Footer() {
   return <footer className="footer"><div className="footer-top"><div><div className="eyebrow"><span className="eyebrow-dot"/> A BETTER WAY TO LEARN</div><h2>MAKE YOUR<br/><em>NEXT MOVE.</em></h2></div><PillLink to="/build">Build my path</PillLink></div>
-    <div className="footer-bottom"><Link to="/" className="footer-brand">skillpath<span>.</span></Link><span>LEARN WITH INTENTION. © 2026 SKILLPATH</span><span>BUILT FOR CURIOUS MINDS ↗</span></div>
+    <div className="footer-bottom"><Link to="/" className="footer-brand">SKILL<span>/</span>PATH</Link><span>LEARN WITH INTENTION. © 2026 SKILLPATH</span><span>BUILT FOR CURIOUS MINDS ↗</span></div>
   </footer>;
 }
 
