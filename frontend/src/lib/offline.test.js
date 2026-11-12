@@ -10,9 +10,9 @@ describe("SkillPath browser demo fallback", () => {
     const meta = offlineRequest("/meta");
     expect(meta.engine_mode).toBe("browser-demo");
     expect(meta.resource_count).toBeGreaterThan(20);
-    const catalog = offlineRequest("/catalog?category=Backend");
+    const catalog = offlineRequest("/catalog?q=python");
     expect(catalog.resources.length).toBeGreaterThan(1);
-    expect(catalog.resources.every(r=>r.category==="Backend")).toBe(true);
+    expect(catalog.resources.every(r => (r.title + " " + r.description + " " + r.skills.join(" ")).toLowerCase().includes("python"))).toBe(true);
   });
   it("enforces beginner-level and prerequisite guardrails", () => {
     const result = offlineRecommend(beginner,7);

@@ -1,0 +1,61 @@
+name: Import public course catalogue
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - backend/scripts/build_public_catalog.py
+      - .github/workflows/import-public-catalog.yml
+permissions:
+  contents: write
+jobs:
+  build-catalog:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download public English course dataset and normalize metadata
+        run: python backend/scripts/build_public_catalog.py
+      - name: Check real catalog coverage and provenance
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from collections import Counter
+          data=json.loads(Path("backend/data/public_courses.json").read_text())
+          print("Records:",len(data),"Sources:",Counter(row.get("source") for row in data))
+          assert len(data) > 3000
+          assert sum(r.get("source")=="coursera-metadata-2024" for r in data) > 3000
+          assert any("signals and systems" in row["title"].lower() for row in data)
+          assert all(row["url"].startswith("https://") for row in data)
+          PY
+      - name: Install Python dependencies once for validation
+        run: pip install -r backend/requirements.txt
+      - name: Verify ranking and API against imported public dataset
+        run: python -m pytest -q
+        working-directory: backend
+      - name: Verify browser demo and production bundle with real records
+        run: |
+          npm install
+          npm run test:unit
+          npm run build
+        working-directory: frontend
+      - name: Commit normalized data files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/data/public_courses.json frontend/src/data/public_courses.json
+          if ! git diff --cached --quiet; then
+            git commit -m "data: integrate public English course catalog and MIT OCW resources"
+            git push origin HEAD:main
+          else
+            echo "Catalog already current"
+          fi
