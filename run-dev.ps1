@@ -36,9 +36,24 @@ if (-not $pythonExe) {
     throw "Python not found. Create the environment once: python -m venv .venv ; .\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt"
 }
 
-& $pythonExe -c "import uvicorn, fastapi, sklearn, dotenv, google.genai" 2>$null
-if ($LASTEXITCODE -ne 0) {
-    throw "One-time backend dependency update required (not every launch). Run '.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt' ONCE."
+$previousErrorActionPreference = $ErrorActionPreference
+try {
+    # PowerShell 5.1 treats a Python traceback on stderr as NativeCommandError.
+    # Allow the probe to finish, then check its exit code rather than crashing.
+    $ErrorActionPreference = "Continue"
+    & $pythonExe -c "import uvicorn, fastapi, sklearn, dotenv, google.genai" 2>$null
+    $dependenciesAvailable = ($LASTEXITCODE -eq 0)
+} finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+}
+if (-not $dependenciesAvailable) {
+    $requirements = Join-Path $backend "requirements.txt"
+    Write-Host ""
+    Write-Host "SkillPath needs a ONE-TIME backend dependency update." -ForegroundColor Yellow
+    Write-Host "Run this command from the SkillPath folder:" -ForegroundColor Gray
+    Write-Host ('& "' + $pythonExe + '" -m pip install -r "' + $requirements + '"') -ForegroundColor Cyan
+    Write-Host "Then run .\run-dev.ps1 again. Subsequent launches won't reinstall." -ForegroundColor Gray
+    return
 }
 
 Write-Host ""
