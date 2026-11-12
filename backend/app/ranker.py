@@ -18,6 +18,8 @@ GOAL_MAP = {
     "ai engineer": ["python", "machine learning", "llm", "api", "deployment"],
     "backend": ["python", "git", "api", "fastapi", "sql", "databases"],
     "web developer": ["html", "css", "javascript", "react", "api"],
+    "web application": ["html", "css", "javascript", "react", "api"],
+    "web app": ["html", "css", "javascript", "react", "api"],
     "frontend": ["html", "css", "javascript", "react"],
     "product analytics": ["sql", "statistics", "experimentation", "visualization"],
     "deep learning": ["python", "machine learning", "pytorch", "deep learning"],
@@ -52,8 +54,10 @@ def _score(row, known, goal, profile, history, weights, feedback):
     raw = sum(features[k] * weights[k] for k in weights)
     duplicates = sum(1 for s in skills if history[s] > 0)
     diversity = min(.17, .035 * duplicates)
+    # Avoid recommending an intro course that teaches nothing new.
+    already_mastered = .28 if skills.issubset(known) else 0.0
     feedback_bonus = max(-.05, min(.05, .025 * feedback.get(row["id"], 0)))
-    return round(max(0., min(1., raw - diversity + feedback_bonus)) * 100, 1), features
+    return round(max(0., min(1., raw - diversity - already_mastered + feedback_bonus)) * 100, 1), features
 
 def _why(row: dict, newly: list[str], target: set[str]) -> str:
     aligned = [s for s in row["skills"] if s in target]
