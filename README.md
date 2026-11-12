@@ -4,7 +4,7 @@
 
 ## What it does
 
-- **Landing:** cinematic black-and-white hero inspired by the supplied reference screenshot, floating photographic cards, whole-scene cursor-driven depth/parallax, frosted session CTA, expanded navigation, and reduced-motion fallbacks.
+- **Landing:** cinematic black-and-white hero, mouse-tracked multi-layer photographic parallax, giant typographic section transition, four sticky overlapping image/text panels, subtle scroll reveals, frosted session CTA, and reduced-motion fallbacks.
 - **Build a path:** choose existing skills, goal, level, available hours per week, ranking mode, and 3–7 steps.
 - **Discover:** search/filter the starter catalogue, open public learning resources, mark courses completed.
 - **My path:** dynamically sequenced prerequisites, per-course fit breakdown, time-aware week ranges, explanations, feedback, Markdown export.
@@ -16,21 +16,13 @@
 
 React 18 + Vite / CSS + Lucide icons → FastAPI + Pydantic → Python rule-aware hybrid scoring → local JSON catalogue + SQLite anonymous feedback. Gemini is **optional and post-ranking only**.
 
-## Run locally (first time)
+## Run locally
 
-Prerequisites: **Python 3.10+** and **Node.js 20+**. From the cloned repo root, in PowerShell:
+### Fastest start: frontend only (no backend required)
 
-```powershell
-git clone https://github.com/RohitSuhasReddy/SkillPath.git
-cd SkillPath
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r backend/requirements.txt
-cd backend
-python -m uvicorn app.main:app --reload --port 8000
-```
+The complete interface now has a **clearly labeled local demo fallback**. Catalogue browsing, profile/path generation, Markdown export, feedback, and synthetic evaluation all work when FastAPI is stopped. Browser-demo feedback is stored only in localStorage, and scores are illustrative—not real-world performance.
 
-Open a **second terminal** at the repo root:
+Prerequisite: **Node.js 20+**. From the repo root:
 
 ```powershell
 cd frontend
@@ -38,29 +30,33 @@ npm install
 npm run dev
 ```
 
-Visit **http://localhost:5173**. API interactive docs: **http://localhost:8000/docs**.
+Visit **http://localhost:5173**. On later runs, just `npm run dev` inside `frontend/`. You do not need the backend for an interface demo.
 
-On macOS/Linux, activate with `source .venv/bin/activate` instead.
+### Full stack (recommended for project evaluation)
 
-### Later runs
+**Windows quick launch:** From the repo root, double-click `start.bat`. It sets up the Python virtual environment and npm packages if missing, then launches the API and React in separate terminals. Python 3.10+ and Node.js 20+ must be installed.
 
-Terminal 1:
+Alternatively, open two PowerShell terminals. First run:
 
 ```powershell
-cd SkillPath
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+pip install -r backend/requirements.txt
 cd backend
 python -m uvicorn app.main:app --reload --port 8000
 ```
 
-Terminal 2:
+In a second terminal at repo root:
 
 ```powershell
-cd SkillPath/frontend
+cd frontend
+npm install
 npm run dev
 ```
 
-`npm install` and `pip install` are only needed again when dependencies change.
+On future runs, activate the existing virtual environment and start uvicorn again; the installed packages can be reused. API docs: **http://localhost:8000/docs**.
+
+**How it selects a mode:** The frontend first tries FastAPI at `/api` (via the Vite proxy). If the connection fails or the server responds with a 5xx error, the frontend uses its bundled browser-demo engine and displays a clear label. Server validation errors are shown rather than concealed. Restart the API and refresh to return to server-backed mode.
 
 ## Architecture
 
@@ -129,6 +125,7 @@ Restart the API. Without a key, SkillPath displays deterministic explanations an
 cd backend
 python -m pytest -q
 cd ../frontend
+npm run test:unit
 npm run build
 ```
 

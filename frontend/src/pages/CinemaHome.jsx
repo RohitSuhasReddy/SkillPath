@@ -96,6 +96,105 @@ function FloatingPhoto({ photo, index }) {
   </div>;
 }
 
+
+const JOURNEY_CARDS = [
+  {
+    number: "01", category: "THE STARTING POINT",
+    heading: ["MADE FOR", "YOU."],
+    tagline: "Your experience is the starting line.",
+    description: "Tell SkillPath what you already know, what you want to become, and how much time you have. No generic roadmap, no one-size-fits-all plan.",
+    image: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=1400&q=85",
+    alt: "A library of books representing possibilities for learning",
+    to: "/build", action: "CREATE YOUR PROFILE"
+  },
+  {
+    number: "02", category: "THE INTELLIGENCE",
+    heading: ["RELEVANCE", "FIRST."],
+    tagline: "Good recommendations have a reason.",
+    description: "A transparent hybrid ranking system matches real skill gaps, learning goals, difficulty and prerequisite readiness. The next resource is chosen for fit, not hype.",
+    image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1400&q=85",
+    alt: "Computer code and software development work",
+    to: "/discover", action: "EXPLORE RESOURCES"
+  },
+  {
+    number: "03", category: "THE ROUTE",
+    heading: ["SMALL STEPS.", "BIG SHIFTS."],
+    tagline: "Learn in the right order, at your pace.",
+    description: "Skills build on skills. Prerequisites, difficulty limits, topic diversity, and weekly time budgets turn a scattered list of courses into a usable path.",
+    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=85",
+    alt: "Students collaborating around a laptop",
+    to: "/path", action: "SEE YOUR PATH"
+  },
+  {
+    number: "04", category: "THE EVIDENCE",
+    heading: ["MEASURE", "THE MATCH."],
+    tagline: "Less guessing. More accountability.",
+    description: "Look under the hood with Precision@K, NDCG, feature ablation and simulated A/B comparisons. Clear evaluation, with demo metrics labelled as simulated.",
+    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1400&q=85",
+    alt: "A laptop used for analysis and technology work",
+    to: "/lab", action: "OPEN EVALUATION LAB"
+  }
+];
+
+function useScrollWork() {
+  const stageRef = useRef(null);
+  useEffect(() => {
+    const node = stageRef.current;
+    if (!node || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+    const cards = Array.from(node.querySelectorAll(".cinema-work-card"));
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const vh = window.innerHeight;
+      for (const card of cards) {
+        const rect = card.getBoundingClientRect();
+        const approaching = Math.max(0, Math.min(1,(vh * 1.14 - rect.top) / (vh * .7)));
+        const retreat = Math.max(0, Math.min(1,(vh*.1 - rect.bottom) / (vh * .55)));
+        card.style.setProperty("--arrival",approaching.toFixed(3));
+        card.style.setProperty("--leaving",retreat.toFixed(3));
+      }
+    };
+    const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
+    window.addEventListener("scroll",schedule,{passive:true});
+    window.addEventListener("resize",schedule);
+    update();
+    return () => {
+      window.removeEventListener("scroll",schedule);
+      window.removeEventListener("resize",schedule);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  },[]);
+  return stageRef;
+}
+
+function WorkSequence() {
+  const stageRef = useScrollWork();
+  return <section className="cinema-work" id="cinema-approach" aria-label="How SkillPath works">
+    <div className="cinema-work-intro"><span className="cinema-work-index">02 / OUR APPROACH</span>
+      <h2>THE <span>WAY</span><br/>FORWARD.</h2>
+      <p>A thoughtful route from where you are to where you want to be.</p>
+    </div>
+    <div className="cinema-work-stack" ref={stageRef}>
+      {JOURNEY_CARDS.map((card, index) => <article className="cinema-work-card" key={card.number} style={{"--stack-index": index,"zIndex": index+1}}>
+        <div className="cinema-work-picture">
+          <img src={card.image} alt={card.alt} loading="lazy" />
+          <div className="cinema-work-photo-number">SKILLPATH / {card.number}</div>
+        </div>
+        <div className="cinema-work-content">
+          <div className="cinema-work-small"><span>/</span> {card.number} — {card.category}</div>
+          <div className="cinema-work-content-body">
+            <h3><span>{card.heading[0]}</span><span>{card.heading[1]}</span></h3>
+            <strong>{card.tagline}</strong>
+            <p>{card.description}</p>
+            <Link className="cinema-work-link" to={card.to}>{card.action}<ArrowUpRight size={18}/></Link>
+          </div>
+          <div className="cinema-work-step">A CLEARER WAY TO LEARN. <span>{card.number} / 04</span></div>
+        </div>
+      </article>)}
+    </div>
+  </section>;
+}
+
 export default function CinemaHome({ resourceCount }) {
   const heroRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -123,13 +222,14 @@ export default function CinemaHome({ resourceCount }) {
         <h1><span>LEARNING</span><span>IN MOTION</span></h1>
         <p>Personalized learning paths for your skills, your goals,<br className="cinema-desktop-break"/> and everything you want to become.</p>
       </div>
-      <div className="cinema-bottom"><span>PERSONALIZED PATHS / INTELLIGENT RECOMMENDATIONS</span><a href="#cinema-explore" aria-label="Scroll to explore SkillPath">SCROLL TO EXPLORE <ArrowDown size={15}/></a><span>EST. 2026 — ALWAYS LEARNING</span></div>
+      <div className="cinema-bottom"><span>PERSONALIZED PATHS / INTELLIGENT RECOMMENDATIONS</span><a href="#cinema-approach" aria-label="Scroll to discover the SkillPath approach">SCROLL TO EXPLORE <ArrowDown size={15}/></a><span>EST. 2026 — ALWAYS LEARNING</span></div>
       <div id="cinema-nav" className={`cinema-navigation ${menuOpen ? "cinema-navigation-open" : ""}`} aria-hidden={!menuOpen} inert={!menuOpen}>
         <div className="cinema-navigation-top"><span>FIND YOUR DIRECTION</span><button type="button" onClick={() => setMenuOpen(false)} aria-label="Close navigation"><X size={25}/></button></div>
         <nav aria-label="SkillPath navigation">{NAVIGATION.map(item => <Link key={item.to} to={item.to} onClick={() => setMenuOpen(false)}><small>{item.number}</small><span>{item.text}</span><ArrowUpRight size={26}/></Link>)}</nav>
         <div className="cinema-navigation-bottom">CURIOUS MINDS NEVER STAND STILL.</div>
       </div>
     </section>
+    <WorkSequence/>
     <section id="cinema-explore" className="cinema-explore">
       <div className="cinema-explore-head"><span>01 / THE NEXT CHAPTER</span><h2>Less searching.<br/><em>More becoming.</em></h2><p>Tell us where you're headed. We'll connect the skills, prerequisites and resources into a path that fits your life — not somebody else's.</p></div>
       <div className="cinema-explore-links">
