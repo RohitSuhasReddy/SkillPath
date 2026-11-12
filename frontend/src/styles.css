@@ -1,7 +1,7 @@
 /* SkillPath design system — inspired by an editorial, motion-forward reference.
    Reference source could not be automatically inspected; adjust these tokens after visual comparison. */
 :root {
-  --ink: #0b0b0b;
+  --ink: #0d0d0d;
   --ink-soft: #292929;
   --paper: #f5f5f3;
   --paper-light: #ffffff;
@@ -493,8 +493,8 @@ input[type=range]::-moz-range-thumb { border:5px solid var(--ink); width:14px; h
 .big-submit:hover,.dark-button:hover { background:#333; }
 .sidebar-lab { background:#dfdfdf; }
 .aside-inner { background:#e0e0e0; }
-.aside-orbit>span { background:#0b0b0b; color:#fff; }
+.aside-orbit>span { background:#0d0d0d; color:#fff; }
 .mode-active { background:#ebebeb; }
 .lab-metric .percent-bar>span,.experiment-card .percent-bar>span { background:#111; }
 .experiment-card-accent { background:#d7d7d7; }
-.footer { background:#0b0b0b; }
+.footer { background:#0d0d0d; }
