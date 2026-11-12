@@ -1,0 +1,539 @@
+[
+  {
+    "id": "python-basics",
+    "title": "Python for Everybody",
+    "provider": "University of Michigan",
+    "category": "Foundations",
+    "difficulty": "Beginner",
+    "hours": 18,
+    "prerequisites": [],
+    "skills": [
+      "python"
+    ],
+    "description": "Start writing Python programs, working with variables, loops, functions and files.",
+    "url": "https://www.py4e.com/",
+    "popularity": 0.92
+  },
+  {
+    "id": "git-basics",
+    "title": "Git Handbook",
+    "provider": "GitHub",
+    "category": "Foundations",
+    "difficulty": "Beginner",
+    "hours": 5,
+    "prerequisites": [],
+    "skills": [
+      "git"
+    ],
+    "description": "Version control fundamentals, commits, branches and collaborative workflows.",
+    "url": "https://docs.github.com/en/get-started/using-git/about-git",
+    "popularity": 0.87
+  },
+  {
+    "id": "stats-foundations",
+    "title": "Statistics and Probability",
+    "provider": "Khan Academy",
+    "category": "Data & Analytics",
+    "difficulty": "Beginner",
+    "hours": 22,
+    "prerequisites": [],
+    "skills": [
+      "statistics"
+    ],
+    "description": "Core probability, inference, distributions and descriptive statistics.",
+    "url": "https://www.khanacademy.org/math/statistics-probability",
+    "popularity": 0.94
+  },
+  {
+    "id": "sql-course",
+    "title": "SQLBolt Interactive Lessons",
+    "provider": "SQLBolt",
+    "category": "Data & Analytics",
+    "difficulty": "Beginner",
+    "hours": 9,
+    "prerequisites": [],
+    "skills": [
+      "sql"
+    ],
+    "description": "Hands-on SELECT, JOIN, filters and database querying exercises.",
+    "url": "https://sqlbolt.com/",
+    "popularity": 0.92
+  },
+  {
+    "id": "excel-basics",
+    "title": "Excel Training",
+    "provider": "Microsoft",
+    "category": "Data & Analytics",
+    "difficulty": "Beginner",
+    "hours": 8,
+    "prerequisites": [],
+    "skills": [
+      "excel"
+    ],
+    "description": "Spreadsheets, formulas, pivot tables and charts for everyday analysis.",
+    "url": "https://support.microsoft.com/en-us/excel",
+    "popularity": 0.8
+  },
+  {
+    "id": "data-viz",
+    "title": "Data Visualization Basics",
+    "provider": "Kaggle Learn",
+    "category": "Data & Analytics",
+    "difficulty": "Beginner",
+    "hours": 7,
+    "prerequisites": [],
+    "skills": [
+      "visualization"
+    ],
+    "description": "Explore charts, storytelling and visualization for data decisions.",
+    "url": "https://www.kaggle.com/learn/data-visualization",
+    "popularity": 0.82
+  },
+  {
+    "id": "pandas-guide",
+    "title": "Pandas Tutorials",
+    "provider": "pandas",
+    "category": "Data & Analytics",
+    "difficulty": "Intermediate",
+    "hours": 11,
+    "prerequisites": [
+      "python"
+    ],
+    "skills": [
+      "pandas",
+      "python"
+    ],
+    "description": "Clean, manipulate and explore tabular data with pandas.",
+    "url": "https://pandas.pydata.org/docs/getting_started/intro_tutorials/index.html",
+    "popularity": 0.94
+  },
+  {
+    "id": "numpy-guide",
+    "title": "NumPy Quickstart",
+    "provider": "NumPy",
+    "category": "Data & Analytics",
+    "difficulty": "Intermediate",
+    "hours": 8,
+    "prerequisites": [
+      "python"
+    ],
+    "skills": [
+      "numpy",
+      "python"
+    ],
+    "description": "Arrays, broadcasting and numerical operations for scientific computing.",
+    "url": "https://numpy.org/doc/stable/user/quickstart.html",
+    "popularity": 0.92
+  },
+  {
+    "id": "advanced-sql",
+    "title": "Advanced SQL Tutorials",
+    "provider": "Mode",
+    "category": "Data & Analytics",
+    "difficulty": "Intermediate",
+    "hours": 12,
+    "prerequisites": [
+      "sql"
+    ],
+    "skills": [
+      "sql",
+      "databases"
+    ],
+    "description": "Analytical SQL, advanced joins and window functions.",
+    "url": "https://mode.com/sql-tutorial/",
+    "popularity": 0.84
+  },
+  {
+    "id": "product-experiments",
+    "title": "A/B Testing Guide",
+    "provider": "Evan Miller",
+    "category": "Data & Analytics",
+    "difficulty": "Intermediate",
+    "hours": 12,
+    "prerequisites": [
+      "statistics"
+    ],
+    "skills": [
+      "experimentation",
+      "statistics"
+    ],
+    "description": "Learn statistical power, testing tradeoffs and practical experimentation.",
+    "url": "https://www.evanmiller.org/ab-testing/",
+    "popularity": 0.77
+  },
+  {
+    "id": "ml-intro",
+    "title": "Intro to Machine Learning",
+    "provider": "Kaggle Learn",
+    "category": "Machine Learning",
+    "difficulty": "Intermediate",
+    "hours": 12,
+    "prerequisites": [
+      "python"
+    ],
+    "skills": [
+      "machine learning",
+      "scikit-learn"
+    ],
+    "description": "Train and validate your first practical predictive models.",
+    "url": "https://www.kaggle.com/learn/intro-to-machine-learning",
+    "popularity": 0.92
+  },
+  {
+    "id": "scikit-guide",
+    "title": "Getting Started with scikit-learn",
+    "provider": "scikit-learn",
+    "category": "Machine Learning",
+    "difficulty": "Intermediate",
+    "hours": 15,
+    "prerequisites": [
+      "python",
+      "machine learning"
+    ],
+    "skills": [
+      "scikit-learn",
+      "model evaluation"
+    ],
+    "description": "Pipeline design, model training and cross-validation.",
+    "url": "https://scikit-learn.org/stable/getting_started.html",
+    "popularity": 0.94
+  },
+  {
+    "id": "model-evaluation",
+    "title": "Machine Learning Crash Course",
+    "provider": "Google",
+    "category": "Machine Learning",
+    "difficulty": "Intermediate",
+    "hours": 13,
+    "prerequisites": [
+      "python"
+    ],
+    "skills": [
+      "machine learning",
+      "model evaluation"
+    ],
+    "description": "Explore data splits, generalization, metrics and ML workflows.",
+    "url": "https://developers.google.com/machine-learning/crash-course",
+    "popularity": 0.9
+  },
+  {
+    "id": "feature-engineering",
+    "title": "Feature Engineering",
+    "provider": "Kaggle Learn",
+    "category": "Machine Learning",
+    "difficulty": "Intermediate",
+    "hours": 7,
+    "prerequisites": [
+      "python"
+    ],
+    "skills": [
+      "feature engineering",
+      "machine learning"
+    ],
+    "description": "Construct useful predictors from raw and categorical features.",
+    "url": "https://www.kaggle.com/learn/feature-engineering",
+    "popularity": 0.83
+  },
+  {
+    "id": "intro-pytorch",
+    "title": "PyTorch Tutorials",
+    "provider": "PyTorch",
+    "category": "Machine Learning",
+    "difficulty": "Advanced",
+    "hours": 25,
+    "prerequisites": [
+      "python",
+      "machine learning"
+    ],
+    "skills": [
+      "pytorch",
+      "deep learning"
+    ],
+    "description": "Build tensors, neural networks and training loops.",
+    "url": "https://pytorch.org/tutorials/",
+    "popularity": 0.92
+  },
+  {
+    "id": "deep-learning",
+    "title": "Practical Deep Learning for Coders",
+    "provider": "fast.ai",
+    "category": "Machine Learning",
+    "difficulty": "Advanced",
+    "hours": 35,
+    "prerequisites": [
+      "python",
+      "machine learning"
+    ],
+    "skills": [
+      "deep learning",
+      "pytorch"
+    ],
+    "description": "Applied deep learning workflows with computer vision and NLP.",
+    "url": "https://course.fast.ai/",
+    "popularity": 0.91
+  },
+  {
+    "id": "python-testing",
+    "title": "pytest Documentation",
+    "provider": "pytest",
+    "category": "Backend",
+    "difficulty": "Intermediate",
+    "hours": 7,
+    "prerequisites": [
+      "python"
+    ],
+    "skills": [
+      "testing",
+      "python"
+    ],
+    "description": "Test Python services using fixtures, parametrization and assertions.",
+    "url": "https://docs.pytest.org/en/stable/getting-started.html",
+    "popularity": 0.87
+  },
+  {
+    "id": "api-foundations",
+    "title": "HTTP Overview",
+    "provider": "MDN Web Docs",
+    "category": "Backend",
+    "difficulty": "Beginner",
+    "hours": 7,
+    "prerequisites": [],
+    "skills": [
+      "api",
+      "http"
+    ],
+    "description": "Understand requests, responses, status codes and the web's transport layer.",
+    "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Overview",
+    "popularity": 0.92
+  },
+  {
+    "id": "fastapi-guide",
+    "title": "FastAPI Tutorial",
+    "provider": "FastAPI",
+    "category": "Backend",
+    "difficulty": "Intermediate",
+    "hours": 14,
+    "prerequisites": [
+      "python",
+      "api"
+    ],
+    "skills": [
+      "fastapi",
+      "api",
+      "python"
+    ],
+    "description": "Build typed APIs with validation, dependency injection and docs.",
+    "url": "https://fastapi.tiangolo.com/tutorial/",
+    "popularity": 0.93
+  },
+  {
+    "id": "db-design",
+    "title": "Database Design Basics",
+    "provider": "PostgreSQL",
+    "category": "Backend",
+    "difficulty": "Intermediate",
+    "hours": 12,
+    "prerequisites": [
+      "sql"
+    ],
+    "skills": [
+      "databases",
+      "sql"
+    ],
+    "description": "Relational database schema design, constraints and indexes.",
+    "url": "https://www.postgresql.org/docs/current/tutorial.html",
+    "popularity": 0.89
+  },
+  {
+    "id": "docker-start",
+    "title": "Get Started with Docker",
+    "provider": "Docker",
+    "category": "Backend",
+    "difficulty": "Intermediate",
+    "hours": 8,
+    "prerequisites": [],
+    "skills": [
+      "docker",
+      "deployment"
+    ],
+    "description": "Package and run reproducible containerized applications.",
+    "url": "https://docs.docker.com/get-started/",
+    "popularity": 0.9
+  },
+  {
+    "id": "web-fundamentals",
+    "title": "Learn Web Development",
+    "provider": "MDN Web Docs",
+    "category": "Web Development",
+    "difficulty": "Beginner",
+    "hours": 20,
+    "prerequisites": [],
+    "skills": [
+      "html",
+      "css"
+    ],
+    "description": "Build web pages and responsive layouts with semantic HTML and CSS.",
+    "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development",
+    "popularity": 0.94
+  },
+  {
+    "id": "js-guide",
+    "title": "JavaScript Guide",
+    "provider": "MDN Web Docs",
+    "category": "Web Development",
+    "difficulty": "Intermediate",
+    "hours": 18,
+    "prerequisites": [
+      "html"
+    ],
+    "skills": [
+      "javascript"
+    ],
+    "description": "Understand language fundamentals, objects, async code and browser APIs.",
+    "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide",
+    "popularity": 0.93
+  },
+  {
+    "id": "react-docs",
+    "title": "Learn React",
+    "provider": "React",
+    "category": "Web Development",
+    "difficulty": "Intermediate",
+    "hours": 20,
+    "prerequisites": [
+      "javascript"
+    ],
+    "skills": [
+      "react",
+      "javascript"
+    ],
+    "description": "Component-driven application building with state and effects.",
+    "url": "https://react.dev/learn",
+    "popularity": 0.94
+  },
+  {
+    "id": "accessibility",
+    "title": "Web Accessibility",
+    "provider": "MDN Web Docs",
+    "category": "Web Development",
+    "difficulty": "Beginner",
+    "hours": 8,
+    "prerequisites": [],
+    "skills": [
+      "accessibility",
+      "html"
+    ],
+    "description": "Create accessible semantic interfaces and keyboard-friendly interactions.",
+    "url": "https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Accessibility",
+    "popularity": 0.89
+  },
+  {
+    "id": "typescript-guide",
+    "title": "TypeScript Handbook",
+    "provider": "TypeScript",
+    "category": "Web Development",
+    "difficulty": "Intermediate",
+    "hours": 17,
+    "prerequisites": [
+      "javascript"
+    ],
+    "skills": [
+      "typescript",
+      "javascript"
+    ],
+    "description": "Write typed JavaScript using interfaces, generics and narrowing.",
+    "url": "https://www.typescriptlang.org/docs/handbook/intro.html",
+    "popularity": 0.89
+  },
+  {
+    "id": "llm-intro",
+    "title": "Hugging Face NLP Course",
+    "provider": "Hugging Face",
+    "category": "AI Engineering",
+    "difficulty": "Intermediate",
+    "hours": 20,
+    "prerequisites": [
+      "python"
+    ],
+    "skills": [
+      "llm",
+      "nlp",
+      "python"
+    ],
+    "description": "Tokenizers, transformer workflows and modern NLP concepts.",
+    "url": "https://huggingface.co/learn/nlp-course/chapter1/1",
+    "popularity": 0.9
+  },
+  {
+    "id": "prompting-guide",
+    "title": "Prompt Engineering Guide",
+    "provider": "Prompting Guide",
+    "category": "AI Engineering",
+    "difficulty": "Beginner",
+    "hours": 6,
+    "prerequisites": [],
+    "skills": [
+      "llm",
+      "prompt engineering"
+    ],
+    "description": "Learn practical prompting patterns and evaluation basics.",
+    "url": "https://www.promptingguide.ai/",
+    "popularity": 0.82
+  },
+  {
+    "id": "huggingface-tools",
+    "title": "Hugging Face Transformers",
+    "provider": "Hugging Face",
+    "category": "AI Engineering",
+    "difficulty": "Advanced",
+    "hours": 24,
+    "prerequisites": [
+      "python",
+      "machine learning"
+    ],
+    "skills": [
+      "llm",
+      "deployment"
+    ],
+    "description": "Inference pipelines, fine-tuning concepts and serving models.",
+    "url": "https://huggingface.co/docs/transformers/index",
+    "popularity": 0.91
+  },
+  {
+    "id": "mlops-intro",
+    "title": "MLOps Principles",
+    "provider": "Google Cloud",
+    "category": "MLOps",
+    "difficulty": "Advanced",
+    "hours": 20,
+    "prerequisites": [
+      "machine learning",
+      "python"
+    ],
+    "skills": [
+      "mlops",
+      "deployment"
+    ],
+    "description": "Explore the lifecycle of training, shipping and monitoring ML systems.",
+    "url": "https://cloud.google.com/architecture/mlops-continuous-delivery-and-automation-pipelines-in-machine-learning",
+    "popularity": 0.85
+  },
+  {
+    "id": "deployment-guide",
+    "title": "Deployment Concepts",
+    "provider": "FastAPI",
+    "category": "MLOps",
+    "difficulty": "Intermediate",
+    "hours": 9,
+    "prerequisites": [
+      "api"
+    ],
+    "skills": [
+      "deployment",
+      "api"
+    ],
+    "description": "Understand production API deployment, environments and workers.",
+    "url": "https://fastapi.tiangolo.com/deployment/",
+    "popularity": 0.88
+  }
+]
